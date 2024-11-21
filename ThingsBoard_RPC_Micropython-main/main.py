@@ -20,6 +20,22 @@ from time import sleep
 from sys import exit
 import gc
 import secrets
+from gpio_lcd import GpioLcd
+from machine import Pin
+
+led1 = Pin(26, Pin.OUT)
+
+# Create the LCD object
+lcd = GpioLcd(rs_pin=Pin(27), enable_pin=Pin(25),
+              d4_pin=Pin(33), d5_pin=Pin(32), d6_pin=Pin(21), d7_pin=Pin(22),
+              num_lines=4, num_columns=20)
+
+# Write and clear LCD
+
+def write_lcd(printstring):
+    lcd.clear()
+    lcd.move_to(0, 0)
+    lcd.putstr(printstring)
 
 # the handler callback that gets called when there is a RPC request from the server
 def handler(req_id, method, params):
@@ -33,11 +49,14 @@ def handler(req_id, method, params):
             # check if the value is is "led1 on"
             if params == True:
                 print("led1 on")
+                led1.on()
             else:
                 print("led1 off")
+                led1.off()
         # check if command is send from RPC remote shell widget   
         if method == "sendCommand":
             print(params.get("command"))
+            write_lcd(params.get("command"))
 
     except TypeError as e:
         print(e)
@@ -71,6 +90,7 @@ while True:
         
         # Checking for incoming subscriptions or RPC call requests (non-blocking)
         client.check_msg()
+        
         sleep(3) # blocking delay
     except KeyboardInterrupt:
         print("Disconnected!")
